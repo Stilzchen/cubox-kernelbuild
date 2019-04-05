@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#some variables that will be used later
 longtermkernel=$(curl -s https://www.kernel.org|grep -A2 longterm|head -n 2|tail -n1 |cut -d '<' -f3|cut -d '>' -f2)
 longtermmajor=$(echo $longtermkernel|cut -d '.' -f1)
 runningkernel=$(uname -r)
@@ -22,13 +21,15 @@ echo -e "##################################################
 function helpFunction {
 echo -e "\n\nThis script tries to install the newest longterm kernel.\n
 Its not part of this script to let you choose the longterm kernel branch.\n
-The script checks the version of the newest available longterm kernel, download the source, build zImage, dtb files and modules and copy the modules to the /lib directory.\n
-The used kernel config file is copied from the running kernel.\nThe original kernel config file was grapped from xilka kernel 4.10.17 (http://xilka.com/kernel/4/4.10/4.10.17/release/1/), because this one is well prepared and come with many useful modules enabled."
+The script checks the version of the newest available longterm kernel, downloads the source, build zImage, dtb files and modules and copy the modules to the /lib directory.\n
+The used kernel config file is copied from the running kernel.\nThe original kernel config file was grapped from xilka kernel 4.10.17 (http://xilka.com/kernel/4/4.10/4.10.17/release/1/), because this one is well prepared and come with many useful modules enabled.\n"
 }
 
 function doitFunction {
+#read -p "Press enter to continue"
 #get the kernel
 echo "Get the new source and unpack it"
+echo $longtermkernel
 echo -e "curl -o /usr/src/linux-$longtermkernel.tar.xz https://cdn.kernel.org/pub/linux/kernel/v$longtermmajor.x/linux-$longtermkernel.tar.xz"
 curl -o /usr/src/linux-$longtermkernel.tar.xz https://cdn.kernel.org/pub/linux/kernel/v$longtermmajor.x/linux-$longtermkernel.tar.xz
 
@@ -58,14 +59,17 @@ mkimage -A arm -O linux -C none  -T kernel -a 0x00008000 -e 0x00008000 -n 'Linux
 echo -e "\nYEAH, it's done!\n\nPlease be shure to update your boot.src file or change kernel symlinks to your new kernel."
 }
 
-
+function caseFunction ()
+{
 if [ $longtermkernel != $runningkernel ]; then
- read -p "Do you want to build the new longterm kernel (y/n)? Press h for help." choice
- case "$choice" in
+ read -p "Do you want to build the new longterm kernel (y/n)? Press h for help. " choice
+ case "$choice" in 
    y|Y ) echo "yes" && doitFunction;;
-   h|H ) echo "help" && helpFunction;;
+   h|H ) echo "help" && helpFunction && caseFunction;;
    n|N ) echo "Ok, good bye";;
-   * ) echo "invalid input, abort";;
+   * ) echo -e "\ninvalid input, please type y (yes), n (no) or h (help)\n" && caseFunction;;
  esac;
  else echo "running kernel and longterm kernel are the same, nothing to do"
 fi
+}
+caseFunction
